@@ -1,19 +1,28 @@
-# Airports CLI
+# Airports Project
 
-Small Python app for:
+This repository contains:
 
-- airport code lookup (IATA/ICAO)
-- great-circle distance between airports
-- multi-leg route distance
+1. **Python CLI** for airport lookup and distance calculation (offline CSV-driven)
+2. **Electron desktop app** for AirportGap-powered airport search, details, distance, and map visualization
+
+---
+
+## Python CLI (`src/`)
+
+### What it does
+
+- lookup airport by IATA/ICAO code
+- calculate great-circle distance between two airports
+- calculate multi-leg route distance
 
 Data source in this repo: `data/airports_sample.csv`.
 
-## Requirements
+### Requirements
 
 - Python 3.10+
-- `pytest` for tests
+- `pytest` (for tests)
 
-## Run
+### Run
 
 From project root:
 
@@ -25,19 +34,19 @@ python -m src route JFK LHR CDG
 python -m src route JFK LHR CDG --miles
 ```
 
-You can also provide a custom dataset path:
+Use a custom CSV path:
 
 ```bash
 python -m src --db data/airports_sample.csv lookup DXB
 ```
 
-## Test
+### Test
 
 ```bash
 pytest -q
 ```
 
-## CSV format
+### CSV format
 
 Expected columns:
 
@@ -49,29 +58,39 @@ Expected columns:
 - `lat`
 - `lon`
 
-## Notes on API integration
+---
 
-This app currently works fully offline with local data. A common extension is:
+## Electron Desktop App (`electron-airports/`)
 
-1. local CSV lookup first
-2. external API fallback (Amadeus, API Ninjas, AirportDB)
-3. cache enriched results locally
+### What it does
 
-## Electron Windows desktop app
+- two searchable airport selectors (**From** / **To**)
+- live airport details from AirportGap (`GET /api/airports/{code}`)
+- distance from AirportGap (`POST /api/airports/distance`)
+- interactive Leaflet map with airport markers and animated great-circle arc
+- optional plotting of all cached/retrieved airports
+- local disk caching of retrieved AirportGap airport pages
+- glassmorphic UI styling
 
-A desktop UI is included under `electron-airports/`.
+### Notes on data behavior
 
-Features:
+- The app loads quickly using cached/first-page data, then continues crawling airport pages in the background.
+- Cache status (hits/misses, pages fetched, crawl progress) is visible in the UI.
 
-- two searchable airport selectors (prefiltered from local CSV)
-- live airport details from AirportGap API (`/api/airports/{code}`)
-- distance from AirportGap API (`POST /api/airports/distance`)
-- interactive map (Leaflet) with both airport points and a rendered great-circle arc
-
-Run:
+### Run
 
 ```bash
 cd electron-airports
 npm install
 npm start
 ```
+
+---
+
+## Future API integration (CLI)
+
+The CLI is currently fully offline. A common extension path is:
+
+1. local CSV lookup first
+2. external API fallback (Amadeus, API Ninjas, AirportDB)
+3. cache enriched results locally
