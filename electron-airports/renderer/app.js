@@ -7,6 +7,7 @@ const toClear = document.getElementById('toClear');
 const fromPanel = document.getElementById('fromPanel');
 const toPanel = document.getElementById('toPanel');
 const compareBtn = document.getElementById('compareBtn');
+const autoShowToggle = document.getElementById('autoShowToggle');
 const plotAllToggle = document.getElementById('plotAllToggle');
 const statusEl = document.getElementById('status');
 const cacheStatusEl = document.getElementById('cacheStatus');
@@ -26,6 +27,7 @@ let mapLayerGroup = L.layerGroup().addTo(map);
 let arcAnimationFrameId = null;
 let arcAnimationToken = 0;
 let syncingPanels = false;
+let autoShowTimerId = null;
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -342,6 +344,22 @@ function syncPanels(source, target) {
   syncingPanels = false;
 }
 
+function requestAutoShowCompare() {
+  if (!autoShowToggle?.checked) return;
+
+  if (autoShowTimerId !== null) {
+    clearTimeout(autoShowTimerId);
+  }
+
+  autoShowTimerId = setTimeout(() => {
+    autoShowTimerId = null;
+
+    if (selectedCode(fromSelect) && selectedCode(toSelect)) {
+      void runCompare();
+    }
+  }, 120);
+}
+
 async function runCompare() {
   try {
     setStatus('Loading airport data...');
@@ -424,6 +442,17 @@ toClear?.addEventListener('click', async () => {
 });
 
 compareBtn.addEventListener('click', runCompare);
+
+fromSelect?.addEventListener('click', requestAutoShowCompare);
+toSelect?.addEventListener('click', requestAutoShowCompare);
+fromSelect?.addEventListener('change', requestAutoShowCompare);
+toSelect?.addEventListener('change', requestAutoShowCompare);
+
+autoShowToggle?.addEventListener('change', () => {
+  if (autoShowToggle.checked) {
+    requestAutoShowCompare();
+  }
+});
 
 plotAllToggle?.addEventListener('change', () => {
   if (selectedCode(fromSelect) && selectedCode(toSelect)) {
