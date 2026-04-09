@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Airport Distance Desktop</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Airport Distance Desktop</h1>
+      <p class="subtitle">Search airports, view details from AirportGap API, and compute distance.</p>
+
+      <section class="selectors">
+        <div class="field">
+          <label for="fromFilter">From airport</label>
+          <div class="filter-row">
+            <input id="fromFilter" placeholder="Filter by IATA/ICAO/city/name" />
+            <button id="fromClear" class="clear-btn" title="Clear filter" type="button">×</button>
+          </div>
+          <div id="fromCount" class="count-label">Showing 0 airports</div>
+          <select id="fromSelect" size="8"></select>
+        </div>
+
+        <div class="field">
+          <label for="toFilter">To airport</label>
+          <div class="filter-row">
+            <input id="toFilter" placeholder="Filter by IATA/ICAO/city/name" />
+            <button id="toClear" class="clear-btn" title="Clear filter" type="button">×</button>
+          </div>
+          <div id="toCount" class="count-label">Showing 0 airports</div>
+          <select id="toSelect" size="8"></select>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button id="compareBtn">Show info + distance</button>
+        <label class="toggle">
+          <input id="plotAllToggle" type="checkbox" />
+          Plot all airports retrieved from API cache
+        </label>
+      </div>
+
+      <p id="status" class="status"></p>
+
+      <details class="panel" open>
+        <summary>Cache status</summary>
+        <pre id="cacheStatus" class="card cache-status">Loading cache status…</pre>
+      </details>
+
+      <section class="results">
+        <article>
+          <details id="fromPanel" class="panel" open>
+            <summary>From</summary>
+            <pre id="fromInfo" class="card">—</pre>
+          </details>
+        </article>
+        <article>
+          <details id="toPanel" class="panel" open>
+            <summary>To</summary>
+            <pre id="toInfo" class="card">—</pre>
+          </details>
+        </article>
+      </section>
+
+      <section class="distance">
+        <details class="panel" open>
+          <summary>Distance</summary>
+          <pre id="distanceInfo" class="card">—</pre>
+        </details>
+      </section>
+
+      <section class="map-section">
+        <h2>Map / Great-circle Arc</h2>
+        <div id="map"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.geodesic@2.7.2/dist/leaflet.geodesic.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
