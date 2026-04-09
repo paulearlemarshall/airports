@@ -87,6 +87,14 @@ npm start
 
 ---
 
+## Documentation
+
+- [Codebase Overview](docs/CODEBASE_OVERVIEW.md)
+- [Developer Quickstart](docs/DEVELOPER_QUICKSTART.md)
+- [Code Review Report](docs/CODE_REVIEW.md)
+
+---
+
 ## Future API integration (CLI)
 
 The CLI is currently fully offline. A common extension path is:
