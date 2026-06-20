@@ -22,7 +22,7 @@
           <label for="fromFilter">From airport</label>
           <div class="filter-row">
             <input id="fromFilter" placeholder="Filter by IATA/ICAO/city/name" />
-            <button id="fromClear" class="clear-btn" title="Clear filter" type="button">×</button>
+            <button id="fromClear" class="clear-btn" title="Clear filter" type="button">x</button>
           </div>
           <div id="fromCount" class="count-label">Showing 0 airports</div>
           <select id="fromSelect" size="8"></select>
@@ -32,7 +32,7 @@
           <label for="toFilter">To airport</label>
           <div class="filter-row">
             <input id="toFilter" placeholder="Filter by IATA/ICAO/city/name" />
-            <button id="toClear" class="clear-btn" title="Clear filter" type="button">×</button>
+            <button id="toClear" class="clear-btn" title="Clear filter" type="button">x</button>
           </div>
           <div id="toCount" class="count-label">Showing 0 airports</div>
           <select id="toSelect" size="8"></select>
@@ -55,20 +55,20 @@
 
       <details class="panel" open>
         <summary>Cache status</summary>
-        <pre id="cacheStatus" class="card cache-status">Loading cache status…</pre>
+        <pre id="cacheStatus" class="card cache-status">Loading cache status...</pre>
       </details>
 
       <section class="results">
         <article>
           <details id="fromPanel" class="panel" open>
             <summary>From</summary>
-            <pre id="fromInfo" class="card">—</pre>
+            <pre id="fromInfo" class="card">-</pre>
           </details>
         </article>
         <article>
           <details id="toPanel" class="panel" open>
             <summary>To</summary>
-            <pre id="toInfo" class="card">—</pre>
+            <pre id="toInfo" class="card">-</pre>
           </details>
         </article>
       </section>
@@ -76,7 +76,7 @@
       <section class="distance">
         <details class="panel" open>
           <summary>Distance</summary>
-          <pre id="distanceInfo" class="card">—</pre>
+          <pre id="distanceInfo" class="card">-</pre>
         </details>
       </section>
 

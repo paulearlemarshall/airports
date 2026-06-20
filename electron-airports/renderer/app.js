@@ -63,7 +63,7 @@ async function refreshCacheStatus() {
 }
 
 function optionLabel(a) {
-  return `${a.name} — ${a.city}, ${a.country} (${a.iata || a.icao || 'N/A'})`;
+  return `${a.name} - ${a.city}, ${a.country} (${a.iata || a.icao || 'N/A'})`;
 }
 
 function pickAirportCode(a) {

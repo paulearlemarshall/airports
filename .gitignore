@@ -11,6 +11,7 @@ venv/
 electron-airports/node_modules/
 node_modules/
 npm-debug.log*
+electron-airports/electron-*.log
 
 # OS / Editor
 .DS_Store

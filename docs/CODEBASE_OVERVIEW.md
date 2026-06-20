@@ -1,100 +1,126 @@
 # Codebase Overview
 
+This repository contains an offline Python command-line tool and an Electron desktop app for richer AirportGap-powered lookup, distance, and map workflows.
+
 ## Repository Structure
 
-- `src/` — Python CLI implementation
-  - `airports_db.py` — CSV loading, airport model, search helpers
-  - `distance.py` — Haversine math + route aggregation
-  - `cli.py` — argparse CLI entrypoints (`lookup`, `distance`, `route`)
-- `tests/` — Python tests (currently distance-focused)
-- `data/` — sample/offline airport data and API snapshots
-- `electron-airports/` — Electron desktop app
-  - `main.js` — main process, API/crawl/cache/IPC orchestration
-  - `preload.js` — secure renderer API bridge
-  - `renderer/` — UI (HTML/CSS/JS)
+- `src/` - Python CLI implementation.
+  - `airports_db.py` - CSV loading, `Airport` model, lookup helpers, basic search helpers.
+  - `distance.py` - Haversine distance calculations and multi-leg route aggregation.
+  - `cli.py` - `argparse` commands for `lookup`, `distance`, and `route`.
+  - `__main__.py` - module entry point for `python -m src`.
+- `tests/` - Python tests, currently focused on distance calculations.
+- `data/` - sample CLI CSV data and AirportGap API snapshots.
+- `electron-airports/` - Electron desktop app.
+  - `airportgapClient.js` - AirportGap API client, response parsing, and airport normalization.
+  - `airportStore.js` - cache state, search, crawl, and disk persistence service.
+  - `ipcHandlers.js` - IPC handler registration for the preload API surface.
+  - `main.js` - Electron app bootstrap, window creation, lifecycle, and process-level handlers.
+  - `preload.js` - constrained `window.airportApi` bridge.
+  - `renderer/index.html` - app shell and controls.
+  - `renderer/style.css` - visual styling.
+  - `renderer/app.js` - renderer state, UI behavior, API calls, and Leaflet map rendering.
 
-## Python CLI Architecture
+## Python CLI
 
-### Flow
+### Runtime Flow
 
-1. `python -m src ...` enters via `src/__main__.py` and CLI `main()` in `src/cli.py`.
-2. Parser resolves command + options (`lookup`, `distance`, `route`, optional `--db`).
-3. Airport CSV is loaded through `load_airports()` in `src/airports_db.py`.
-4. Command-specific handlers resolve airport codes and call distance helpers from `src/distance.py`.
-5. Result is printed in human-readable format.
+1. `python -m src ...` enters through `src/__main__.py`.
+2. `src.cli.main()` builds and runs the `argparse` parser.
+3. `load_airports()` reads the configured CSV file.
+4. Command handlers resolve airport codes with `lookup_airport()`.
+5. Distance commands use helpers from `src/distance.py`.
+6. Results are printed as human-readable terminal output.
 
-### Key Components
+### Commands
 
-- `Airport` dataclass (`airports_db.py`): normalized airport record.
-- `lookup_airport()`: resolves IATA/ICAO code by linear scan.
-- `haversine_km()` / `haversine_miles()` (`distance.py`): great-circle distance.
-- `route_distance()`: sums sequential legs for multi-stop routes.
+- `lookup CODE` - prints airport code, name, city, country, and coordinates.
+- `distance CODE1 CODE2` - prints great-circle distance in kilometers.
+- `distance CODE1 CODE2 --miles` - prints great-circle distance in miles.
+- `route CODE...` - prints summed great-circle distance for a multi-leg route.
+- `route CODE... --miles` - prints route distance in miles.
+- `--db PATH` - overrides the default CSV path.
 
-## Electron App Architecture
+### Data Handling
 
-### Main Process (`electron-airports/main.js`)
+The default CSV is `data/airports_sample.csv`. Required columns are `iata`, `icao`, `name`, `city`, `country`, `lat`, and `lon`.
 
-Responsibilities:
+`airports_db.py` normalizes IATA and ICAO codes to uppercase. Invalid or missing coordinates currently fall back to `0.0`, which is called out in `docs/CODE_REVIEW.md` as a validation improvement.
 
-- Create BrowserWindow and secure webPreferences.
-- Provide API request helper (`fetchJson`) with timeout and error shaping.
-- Maintain in-memory cache:
-  - `PAGE_CACHE` (paged airport list)
-  - `AIRPORTS` + key index for fast lookups
-- Persist and restore cache from disk (`app.getPath('userData')`).
-- Crawl AirportGap pages in background.
-- Register IPC handlers for search/details/distance/cache status.
+## Electron Desktop App
 
-### Preload (`electron-airports/preload.js`)
+### Main Process
 
-Exposes a constrained `window.airportApi` surface to renderer:
+The trusted Electron runtime is split across a few focused CommonJS modules:
+
+- `main.js` creates the `BrowserWindow` with `contextIsolation: true`, `nodeIntegration: false`, and `sandbox: true`.
+- `main.js` configures lifecycle hooks, OpenStreetMap request headers, and process-level broken-pipe handling.
+- `airportgapClient.js` calls AirportGap through `fetchJson()` with timeout handling and shaped errors.
+- `airportgapClient.js` normalizes AirportGap airport records into a stable internal object.
+- `airportStore.js` maintains in-memory caches:
+  - `pageCache` for fetched AirportGap pages.
+  - `airports` for normalized airport records.
+  - `airportKeyIndex` for deduplication and IATA/ICAO lookup.
+- `airportStore.js` persists and restores `airportgap-airports-cache.json` in Electron's user data directory.
+- `airportStore.js` crawls AirportGap pages in the background so search results improve after startup.
+- `ipcHandlers.js` registers IPC handlers used by the renderer.
+
+### Preload API
+
+`electron-airports/preload.js` exposes this constrained API as `window.airportApi`:
 
 - `searchOptions(query)`
 - `getDetails(code)`
-- `getDistance(from, to)`
+- `getDistance(fromCode, toCode)`
 - `getRetrievedAirports()`
 - `crawlAllAirports()`
 - `cacheStatus()`
 
-### Renderer (`electron-airports/renderer/app.js`)
+The renderer does not get direct Node.js access.
 
-- Manages dual airport selectors and filtering.
-- Calls preload APIs for search/details/distance.
-- Renders airport JSON details and distance JSON output.
-- Uses Leaflet to show markers and animated great-circle path.
-- Displays cache/crawl telemetry and supports plotting cached airports.
+### Renderer
 
-## Data Files and Formats
+`electron-airports/renderer/app.js` manages the user workflow:
 
-- Primary offline CLI input: `data/airports_sample.csv`
-- Required CSV fields:
-  - `iata`, `icao`, `name`, `city`, `country`, `lat`, `lon`
-- Electron cache file (runtime-generated):
-  - `airportgap-airports-cache.json` in Electron user data directory
+- Initializes a Leaflet map with OpenStreetMap tiles.
+- Loads default selectors for `KIX` and `NRT` when available.
+- Provides From and To filter inputs with clear buttons.
+- Populates select lists from cached and live AirportGap search results.
+- Shows count labels for each selector.
+- Fetches both airport details and distance in parallel when comparing.
+- Renders compact JSON for airport details and distance output.
+- Draws origin and destination markers.
+- Builds and animates a great-circle path between selected airports.
+- Shows a distance tooltip on the route line.
+- Shows airport detail popups on marker hover.
+- Supports auto-show mode on airport click or selection change.
+- Supports optional plotting of all cached AirportGap airports.
+- Keeps From and To detail panels open or closed in sync.
+- Refreshes cache telemetry every three seconds.
 
-## Run and Test
+## Cache Behavior
 
-### Python CLI
+The Electron app is designed to stay responsive while it gathers AirportGap data:
 
-```bash
-python -m src lookup JFK
-python -m src distance JFK LHR
-python -m src route JFK LHR CDG --miles
-pytest -q
-```
+- On first empty search, it fetches the first AirportGap page if the cache is empty.
+- It starts a non-blocking full crawl after app startup.
+- Searches use cached data first.
+- Exact-looking airport codes trigger a direct AirportGap code lookup if not cached.
+- Non-empty searches may fetch additional pages until enough matches are found or the per-query fetch limit is reached.
+- The "plot all airports retrieved from API cache" toggle forces a full crawl before plotting all cached airports.
 
-### Electron App
+The cache status panel reports total airports, cached pages, crawl progress, full-crawl state, hit/miss counts, and search request count.
 
-```bash
-cd electron-airports
-npm install
-npm start
-```
+## External Services
 
-## Extension Points
+- AirportGap API: airport lists, airport details, and distance calculation.
+- OpenStreetMap tile servers: Leaflet base map tiles.
+- jsDelivr/unpkg CDNs: Leaflet assets loaded by `renderer/index.html`.
 
-- **CLI data enrichment**: add API fallback when code not found locally.
-- **Validation hardening**: reject invalid/missing lat/lon rows early.
-- **Performance**: replace linear scan with prebuilt IATA/ICAO dict index.
-- **Electron modularity**: split `main.js` into API/cache/crawl/IPC modules.
-- **Testing**: add CLI behavior tests and Electron IPC/renderer tests.
+## Tests
+
+Current automated coverage is Python-only:
+
+- `tests/test_distance.py` verifies known JFK/LHR distance ranges, mile conversion, route summation, and short-route behavior.
+
+There are currently no Electron unit tests, renderer tests, or lint scripts.
